@@ -1,0 +1,64 @@
+@{
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+
+<div class="sidebar">
+
+    <div class="brand">
+        🚕 TaxiConnect
+    </div>
+
+    <ul>
+
+        <li class="@((currentAction == "Index" || currentAction == "Dashboard") ? "active" : null)">
+            <a asp-controller="Home" asp-action="Index">
+                <i class="fa fa-home"></i>
+                Dashboard
+            </a>
+        </li>
+
+        <li class="@(currentAction == "Bookings" ? "active" : null)">
+            <a asp-controller="Home" asp-action="Bookings">
+                <i class="fa fa-book"></i>
+                Bookings
+            </a>
+        </li>
+
+        <li class="@(currentAction == "Drivers" ? "active" : null)">
+            <a asp-controller="Home" asp-action="Drivers">
+                <i class="fa fa-car"></i>
+                Drivers
+            </a>
+        </li>
+
+        <li class="@(currentAction == "Complaints" ? "active" : null)">
+            <a asp-controller="Home" asp-action="Complaints">
+                <i class="fa fa-circle-exclamation"></i>
+                Complaints
+            </a>
+        </li>
+
+        <li class="@(currentAction == "Reports" ? "active" : null)">
+            <a asp-controller="Home" asp-action="Reports">
+                <i class="fa fa-file"></i>
+                Reports
+            </a>
+        </li>
+
+        <li class="@(currentAction == "Settings" ? "active" : null)">
+            <a asp-controller="Home" asp-action="Settings">
+                <i class="fa fa-gear"></i>
+                Settings
+            </a>
+        </li>
+
+        <li>
+            <a asp-controller="Account" asp-action="Logout">
+                <i class="fa fa-right-from-bracket"></i>
+                Logout
+            </a>
+        </li>
+
+    </ul>
+
+</div>

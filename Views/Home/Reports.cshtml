@@ -1,0 +1,120 @@
+@{
+    ViewData["Title"] = "Reports & Analytics";
+}
+
+<div class="page-header">
+    <div>
+        <h2>Reports & Analytics</h2>
+        <p class="text-muted">Track booking performance, trip completion, driver utilization, and complaint trends.</p>
+    </div>
+    <div class="header-actions">
+        <button class="btn btn-light">Export PDF</button>
+        <button class="btn btn-primary">Refresh Data</button>
+    </div>
+</div>
+
+<div class="report-summary-grid">
+    <div class="stat-card completed">
+        <h6>Total Bookings</h6>
+        <h2>1,245</h2>
+        <p>+9.4% vs last week</p>
+    </div>
+
+    <div class="stat-card picked">
+        <h6>Completed Trips</h6>
+        <h2>1,176</h2>
+        <p>+6.8% completion rate</p>
+    </div>
+
+    <div class="stat-card assigned">
+        <h6>Active Drivers</h6>
+        <h2>86</h2>
+        <p>3 drivers added this week</p>
+    </div>
+
+    <div class="stat-card waiting">
+        <h6>Complaints</h6>
+        <h2>23</h2>
+        <p>Down 12% from last month</p>
+    </div>
+</div>
+
+<div class="report-grid">
+    <div class="report-card">
+        <div class="report-card-header">
+            <h5>Booking Trend</h5>
+            <span>Last 30 days</span>
+        </div>
+        <div class="report-chart">Line chart placeholder</div>
+    </div>
+
+    <div class="report-card">
+        <div class="report-card-header">
+            <h5>Driver Utilization</h5>
+            <span>Active hours this week</span>
+        </div>
+        <div class="report-chart">Bar chart placeholder</div>
+    </div>
+
+    <div class="report-card">
+        <div class="report-card-header">
+            <h5>Revenue Summary</h5>
+            <span>Monthly earnings</span>
+        </div>
+        <div class="report-chart">Area chart placeholder</div>
+    </div>
+
+    <div class="report-card">
+        <div class="report-card-header">
+            <h5>Complaint Breakdown</h5>
+            <span>By type</span>
+        </div>
+        <div class="report-chart">Pie chart placeholder</div>
+    </div>
+</div>
+
+<div class="report-table-card">
+    <div class="report-card-header">
+        <h5>Recent KPI Highlights</h5>
+        <span>Updated 4 minutes ago</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table report-table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Current</th>
+                    <th>Change</th>
+                    <th>Target</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Average pickup time</td>
+                    <td>7m 34s</td>
+                    <td class="text-success">-12%</td>
+                    <td>8m 00s</td>
+                </tr>
+                <tr>
+                    <td>On-time arrivals</td>
+                    <td>81%</td>
+                    <td class="text-success">+4%</td>
+                    <td>85%</td>
+                </tr>
+                <tr>
+                    <td>Driver response rate</td>
+                    <td>95%</td>
+                    <td class="text-success">+2%</td>
+                    <td>90%</td>
+                </tr>
+                <tr>
+                    <td>Late cancellations</td>
+                    <td>12</td>
+                    <td class="text-danger">+8%</td>
+                    <td>10</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

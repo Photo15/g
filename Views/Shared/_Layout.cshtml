@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] - TaxiConnect SA</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <!-- Site CSS -->
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
+
+    <!-- Dashboard CSS -->
+    <link rel="stylesheet"
+          href="~/css/dashboard.css"
+          asp-append-version="true" />
+
+    <!-- Project Styles -->
+    <link rel="stylesheet"
+          href="~/TaxiConnectSA.styles.css"
+          asp-append-version="true" />
+</head>
+
+<body>
+
+    <div class="dashboard-wrapper @(User.Identity?.IsAuthenticated == true ? string.Empty : "no-sidebar")">
+
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <!-- Sidebar -->
+            <partial name="_Sidebar" />
+        }
+
+        <!-- Main Content -->
+        <div class="main-content">
+            @RenderBody()
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="~/js/site.js"
+            asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

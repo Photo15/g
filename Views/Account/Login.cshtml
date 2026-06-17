@@ -1,0 +1,37 @@
+@model TaxiConnectSA.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="auth-page">
+    <div class="auth-card">
+        <h2>Sign In</h2>
+        <p>Enter your credentials to access the dashboard.</p>
+
+        <form asp-action="Login" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Username" class="form-label"></label>
+                <input asp-for="Username" class="form-control" />
+                <span asp-validation-for="Username" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <input asp-for="ReturnUrl" type="hidden" />
+
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+        </form>
+
+        <div class="auth-footer mt-3">
+            <span>Don't have an account?</span>
+            <a asp-controller="Account" asp-action="Register">Register</a>
+        </div>
+    </div>
+</div>

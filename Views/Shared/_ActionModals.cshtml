@@ -1,0 +1,86 @@
+@* Shared modals for booking actions *@
+
+<div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assignModalLabel">Assign Driver</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-2"><strong>Booking:</strong> <span id="assignBookingRef"></span></p>
+                <p class="mb-2"><strong>Pickup:</strong> <span id="assignBookingLocation"></span></p>
+                <p class="mb-2"><strong>Time:</strong> <span id="assignBookingTime"></span></p>
+                <div id="assignDriverList"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Confirm Assignment</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="viewModal" tabindex="-1" aria-labelledby="viewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewModalLabel">View Trip</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Booking ref:</strong> <span id="viewBookingRef"></span></p>
+                <p><strong>Pickup:</strong> <span id="viewBookingLocation"></span></p>
+                <p><strong>Number plate:</strong> <span id="viewNumberPlate"></span></p>
+                <p><strong>Status:</strong> <span id="viewBookingStatus"></span></p>
+                <hr />
+                <h6>Complaints</h6>
+                <p id="viewBookingComplaints" class="mb-0"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="trackModal" tabindex="-1" aria-labelledby="trackModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="trackModalLabel">Track Trip</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Booking:</strong> <span id="trackBookingRef"></span></p>
+                <div id="trackProgressSection"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsModalLabel">Booking Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Booking ref:</strong> <span id="detailsBookingRef"></span></p>
+                <p><strong>Pickup:</strong> <span id="detailsBookingLocation"></span></p>
+                <p><strong>Date:</strong> <span id="detailsBookingDate"></span></p>
+                <p><strong>Time:</strong> <span id="detailsBookingTime"></span></p>
+                <p><strong>Number plate:</strong> <span id="detailsNumberPlate"></span></p>
+                <p><strong>Status:</strong> <span id="detailsBookingStatus"></span></p>
+                <p><strong>Completion:</strong> <span id="detailsBookingCompletion"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

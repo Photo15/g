@@ -1,0 +1,60 @@
+<div class="page-header">
+    <h2>Bookings Management</h2>
+</div>
+
+<div class="booking-card">
+
+    <div class="table-header">
+
+        <h4>All Bookings</h4>
+
+        <input type="text"
+               class="search-box"
+               placeholder="Search booking">
+
+    </div>
+
+    <table class="table">
+
+        <thead>
+            <tr>
+                <th>Ref No</th>
+                <th>Location</th>
+                <th>Passengers</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+                <td>T1234</td>
+                <td>Madiba Street</td>
+                <td>1</td>
+                <td>
+                    <span class="status-waiting">
+                        WAITING
+                    </span>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-primary"
+                            data-bs-toggle="modal"
+                            data-bs-target="#assignModal"
+                            data-action-type="assign"
+                            data-booking-ref="T1234"
+                            data-booking-location="Madiba Street"
+                            data-booking-time="10:15"
+                            data-available-drivers='["Sipho", "Lebo"]'>
+                        Assign
+                    </button>
+                </td>
+            </tr>
+
+        </tbody>
+
+    </table>
+
+</div>
+
+<partial name="_ActionModals" />

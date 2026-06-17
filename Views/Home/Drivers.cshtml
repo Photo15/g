@@ -1,0 +1,71 @@
+﻿@model IEnumerable<TaxiConnectSA.Models.DriverViewModel>
+
+@{
+    ViewData["Title"] = "Drivers";
+}
+
+<div class="page-header">
+    <h2>Drivers</h2>
+</div>
+
+@if (ViewBag.FirebaseError != null)
+{
+    <div class="alert alert-warning" role="alert">
+        <strong>Firebase not configured:</strong> @ViewBag.FirebaseError
+    </div>
+}
+
+<div class="stats">
+
+    <div class="stat-card assigned">
+        <h5>Active Drivers</h5>
+        <h2>@Model.Count(d => string.Equals(d.Status, "ACTIVE", StringComparison.OrdinalIgnoreCase))</h2>
+    </div>
+
+    <div class="stat-card waiting">
+        <h5>Idle Drivers</h5>
+        <h2>@Model.Count(d => string.Equals(d.Status, "IDLE", StringComparison.OrdinalIgnoreCase))</h2>
+    </div>
+
+</div>
+
+<div class="booking-card">
+
+    <h4>Driver List</h4>
+
+    <table class="table">
+
+        <thead>
+            <tr>
+                <th>Driver Name</th>
+                <th>Taxi Number</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="3">No drivers found.</td>
+                </tr>
+            }
+            else
+            {
+                foreach (var driver in Model)
+                {
+                    var status = (driver.Status ?? "UNKNOWN").ToUpperInvariant();
+                    var cssClass = status == "ACTIVE" ? "status-picked" : "status-waiting";
+                    <tr>
+                        <td>@driver.Name</td>
+                        <td>@driver.TaxiNumber</td>
+                        <td><span class="@cssClass">@status</span></td>
+                    </tr>
+                }
+            }
+        </tbody>
+
+    </table>
+</div>
+
+</div>

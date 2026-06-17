@@ -1,0 +1,222 @@
+﻿@{
+    ViewData["Title"] = "Marshal Dashboard";
+}
+
+<div class="page-header">
+
+    <h2>🏠 Marshal Dashboard</h2>
+
+    <div class="header-actions">
+
+        <button class="new-booking">
+            + New Booking
+        </button>
+
+        <i class="fa-solid fa-bell notification"></i>
+
+    </div>
+
+</div>
+
+<div class="dashboard-card">
+
+    <h3>Live Bookings</h3>
+
+    <div class="stats">
+
+        <div class="stat-card waiting">
+            <i class="fa-solid fa-clock"></i>
+            <h6>WAITING</h6>
+            <h2>12</h2>
+        </div>
+
+        <div class="stat-card assigned">
+            <i class="fa-solid fa-user-check"></i>
+            <h6>ASSIGNED</h6>
+            <h2>8</h2>
+        </div>
+
+        <div class="stat-card picked">
+            <i class="fa-solid fa-car-side"></i>
+            <h6>PICKED UP</h6>
+            <h2>15</h2>
+        </div>
+
+        <div class="stat-card completed">
+            <i class="fa-solid fa-circle-check"></i>
+            <h6>COMPLETED</h6>
+            <h2>32</h2>
+        </div>
+
+    </div>
+
+</div>
+
+<div class="booking-card">
+
+    <div class="table-header">
+
+        <h4>All Bookings</h4>
+
+        <div class="filters">
+
+            <select class="status-filter">
+                <option>All Status</option>
+                <option>Waiting</option>
+                <option>Assigned</option>
+                <option>Picked Up</option>
+                <option>Completed</option>
+            </select>
+
+            <input type="text"
+                   class="search-box"
+                   placeholder="Search location or reference..." />
+
+        </div>
+
+    </div>
+
+    <table class="table">
+
+        <thead>
+            <tr>
+                <th>Ref No</th>
+                <th>Pickup Location</th>
+                <th>Passengers</th>
+                <th>Status</th>
+                <th>Time</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+                <td>T1234</td>
+                <td>Madiba Street, Tembisa</td>
+                <td>1</td>
+                <td>
+                    <span class="status-waiting">
+                        WAITING
+                    </span>
+                </td>
+                <td>08:45</td>
+                <td>
+                    <button class="btn btn-primary btn-sm">
+                        Assign
+                    </button>
+                </td>
+            </tr>
+
+            <tr>
+                <td>T1235</td>
+                <td>Oakmoor, Tembisa</td>
+                <td>2</td>
+                <td>
+                    <span class="status-assigned">
+                        ASSIGNED
+                    </span>
+                </td>
+                <td>08:43</td>
+                <td>
+                    <button class="btn btn-outline-primary btn-sm">
+                        View
+                    </button>
+                </td>
+            </tr>
+
+            <tr>
+                <td>T1236</td>
+                <td>Rabasotho, Tembisa</td>
+                <td>1</td>
+                <td>
+                    <span class="status-picked">
+                        PICKED UP
+                    </span>
+                </td>
+                <td>08:40</td>
+                <td>
+                    <button class="btn btn-outline-success btn-sm">
+                        Track
+                    </button>
+                </td>
+            </tr>
+
+            <tr>
+                <td>T1237</td>
+                <td>Winnie Mandela, Tembisa</td>
+                <td>3</td>
+                <td>
+                    <span class="status-waiting">
+                        WAITING
+                    </span>
+                </td>
+                <td>08:38</td>
+                <td>
+                    <button class="btn btn-primary btn-sm">
+                        Assign
+                    </button>
+                </td>
+            </tr>
+
+            <tr>
+                <td>T1238</td>
+                <td>Straight-Line, Tembisa</td>
+                <td>1</td>
+                <td>
+                    <span class="status-completed">
+                        COMPLETED
+                    </span>
+                </td>
+                <td>08:30</td>
+                <td>
+                    <button class="btn btn-outline-secondary btn-sm">
+                        Details
+                    </button>
+                </td>
+            </tr>
+
+        </tbody>
+
+    </table>
+
+</div>
+
+<partial name="_ActionModals" />
+
+<div class="bottom-cards">
+
+    <div class="alert-card">
+
+        <h5>🚨 Urgent Attention</h5>
+
+        <p>
+            2 bookings waiting more than 6 minutes.
+        </p>
+
+        <button class="btn btn-light">
+            View All
+        </button>
+
+    </div>
+
+    <div class="activity-card">
+
+        <h5>📋 Recent Activity</h5>
+
+        <p>Driver Sipho accepted booking T1235</p>
+        <small>1 minute ago</small>
+
+        <hr>
+
+        <p>Driver Thabo completed booking T1231</p>
+        <small>4 minutes ago</small>
+
+        <hr>
+
+        <p>New booking received from Oakmoor Station</p>
+        <small>8 minutes ago</small>
+
+    </div>
+
+</div>

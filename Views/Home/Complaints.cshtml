@@ -1,0 +1,63 @@
+@{
+    ViewData["Title"] = "Complaints Management";
+}
+
+<div class="page-header">
+    <h2>Complaints Management</h2>
+</div>
+
+<div class="booking-card">
+
+    <h4>All Complaints</h4>
+
+    <table class="table">
+
+        <thead>
+            <tr>
+                <th>Complaint ID</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+                <td>C001</td>
+                <td>Driver was rude to passenger</td>
+                <td>Driver Behaviour</td>
+                <td>
+                    <span class="status-waiting">
+                        OPEN
+                    </span>
+                </td>
+            </tr>
+
+            <tr>
+                <td>C002</td>
+                <td>Taxi did not arrive on time</td>
+                <td>Service Delay</td>
+                <td>
+                    <span class="status-assigned">
+                        INVESTIGATING
+                    </span>
+                </td>
+            </tr>
+
+            <tr>
+                <td>C003</td>
+                <td>Overcharged passenger</td>
+                <td>Fare Issue</td>
+                <td>
+                    <span class="status-picked">
+                        RESOLVED
+                    </span>
+                </td>
+            </tr>
+
+        </tbody>
+
+    </table>
+
+</div>
