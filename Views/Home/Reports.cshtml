@@ -1,120 +1,185 @@
+@model TaxiConnectSA.Models.ReportsViewModel
 @{
     ViewData["Title"] = "Reports & Analytics";
 }
 
 <div class="page-header">
     <div>
-        <h2>Reports & Analytics</h2>
-        <p class="text-muted">Track booking performance, trip completion, driver utilization, and complaint trends.</p>
+        <h2>📊 Reports & Analytics</h2>
+        <p class="text-muted">Live booking performance, trip completion, driver utilization, and complaints.</p>
     </div>
     <div class="header-actions">
-        <button class="btn btn-light">Export PDF</button>
-        <button class="btn btn-primary">Refresh Data</button>
+        <a href="/Reports" class="btn btn-primary">
+            <i class="fa fa-rotate-right me-1"></i> Refresh
+        </a>
     </div>
 </div>
 
+@if (Model.FirebaseError != null)
+{
+    <div class="alert alert-warning mt-3">
+        <strong>Firebase not configured:</strong> @Model.FirebaseError
+    </div>
+}
+
+@* Live Summary Tiles *@
 <div class="report-summary-grid">
     <div class="stat-card completed">
+        <i class="fa fa-calendar-check"></i>
         <h6>Total Bookings</h6>
-        <h2>1,245</h2>
-        <p>+9.4% vs last week</p>
+        <h2>@Model.TotalBookings</h2>
     </div>
-
     <div class="stat-card picked">
+        <i class="fa fa-circle-check"></i>
         <h6>Completed Trips</h6>
-        <h2>1,176</h2>
-        <p>+6.8% completion rate</p>
+        <h2>@Model.CompletedTrips</h2>
+        <p>@Model.CompletionRate% completion rate</p>
     </div>
-
     <div class="stat-card assigned">
-        <h6>Active Drivers</h6>
-        <h2>86</h2>
-        <p>3 drivers added this week</p>
+        <i class="fa fa-car"></i>
+        <h6>Total Drivers</h6>
+        <h2>@Model.TotalDrivers</h2>
     </div>
-
     <div class="stat-card waiting">
+        <i class="fa fa-exclamation-circle"></i>
         <h6>Complaints</h6>
-        <h2>23</h2>
-        <p>Down 12% from last month</p>
+        <h2>@Model.TotalComplaints</h2>
     </div>
 </div>
 
-<div class="report-grid">
-    <div class="report-card">
-        <div class="report-card-header">
-            <h5>Booking Trend</h5>
-            <span>Last 30 days</span>
-        </div>
-        <div class="report-chart">Line chart placeholder</div>
-    </div>
-
-    <div class="report-card">
-        <div class="report-card-header">
-            <h5>Driver Utilization</h5>
-            <span>Active hours this week</span>
-        </div>
-        <div class="report-chart">Bar chart placeholder</div>
-    </div>
-
-    <div class="report-card">
-        <div class="report-card-header">
-            <h5>Revenue Summary</h5>
-            <span>Monthly earnings</span>
-        </div>
-        <div class="report-chart">Area chart placeholder</div>
-    </div>
-
-    <div class="report-card">
-        <div class="report-card-header">
-            <h5>Complaint Breakdown</h5>
-            <span>By type</span>
-        </div>
-        <div class="report-chart">Pie chart placeholder</div>
-    </div>
-</div>
-
-<div class="report-table-card">
+@* Live Status Breakdown *@
+<div class="report-table-card" style="margin-top: 20px;">
     <div class="report-card-header">
-        <h5>Recent KPI Highlights</h5>
-        <span>Updated 4 minutes ago</span>
+        <h5>📋 Live Booking Status Breakdown</h5>
+        <span>Right now</span>
     </div>
-
     <div class="table-responsive">
         <table class="table report-table">
             <thead>
                 <tr>
-                    <th>Metric</th>
-                    <th>Current</th>
-                    <th>Change</th>
-                    <th>Target</th>
+                    <th>Status</th>
+                    <th>Count</th>
+                    <th>% of Total</th>
                 </tr>
             </thead>
             <tbody>
+                @{
+                    double Pct(int n) => Model.TotalBookings == 0 ? 0 : Math.Round((double)n / Model.TotalBookings * 100, 1);
+                }
                 <tr>
-                    <td>Average pickup time</td>
-                    <td>7m 34s</td>
-                    <td class="text-success">-12%</td>
-                    <td>8m 00s</td>
+                    <td><span class="status-waiting">WAITING</span></td>
+                    <td>@Model.WaitingCount</td>
+                    <td>@Pct(Model.WaitingCount)%</td>
                 </tr>
                 <tr>
-                    <td>On-time arrivals</td>
-                    <td>81%</td>
-                    <td class="text-success">+4%</td>
-                    <td>85%</td>
+                    <td><span class="status-assigned">ASSIGNED</span></td>
+                    <td>@Model.AssignedCount</td>
+                    <td>@Pct(Model.AssignedCount)%</td>
                 </tr>
                 <tr>
-                    <td>Driver response rate</td>
-                    <td>95%</td>
-                    <td class="text-success">+2%</td>
-                    <td>90%</td>
+                    <td><span class="status-picked">PICKED UP</span></td>
+                    <td>@Model.PickedUpCount</td>
+                    <td>@Pct(Model.PickedUpCount)%</td>
                 </tr>
                 <tr>
-                    <td>Late cancellations</td>
-                    <td>12</td>
-                    <td class="text-danger">+8%</td>
-                    <td>10</td>
+                    <td><span class="status-completed">COMPLETED</span></td>
+                    <td>@Model.CompletedTrips</td>
+                    <td>@Pct(Model.CompletedTrips)%</td>
                 </tr>
             </tbody>
         </table>
     </div>
 </div>
+
+@* Recent Bookings *@
+<div class="report-table-card" style="margin-top: 20px;">
+    <div class="report-card-header">
+        <h5>🕐 Recent Bookings</h5>
+        <a href="/Bookings" class="btn btn-outline-secondary btn-sm">View All</a>
+    </div>
+    @if (!Model.RecentBookings.Any())
+    {
+        <p class="text-muted">No bookings yet.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table report-table">
+                <thead>
+                    <tr>
+                        <th>Ref No</th>
+                        <th>Pickup Location</th>
+                        <th>Passengers</th>
+                        <th>Status</th>
+                        <th>Time</th>
+                        <th>Driver</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in Model.RecentBookings)
+                    {
+                        var css = b.Status switch
+                        {
+                            "WAITING"   => "status-waiting",
+                            "ASSIGNED"  => "status-assigned",
+                            "PICKED UP" => "status-picked",
+                            "COMPLETED" => "status-completed",
+                            _           => "status-waiting"
+                        };
+                        <tr>
+                            <td><strong>@b.ReferenceNo</strong></td>
+                            <td>@b.PickupLocation</td>
+                            <td>@b.Passengers</td>
+                            <td><span class="@css">@b.Status</span></td>
+                            <td>@b.TimeAgo()</td>
+                            <td>@(string.IsNullOrEmpty(b.AssignedDriver) ? "—" : b.AssignedDriver)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@* Recent Complaints *@
+@if (Model.RecentComplaints.Any())
+{
+    <div class="report-table-card" style="margin-top: 20px;">
+        <div class="report-card-header">
+            <h5>📢 Recent Complaints</h5>
+            <a href="/Complaints" class="btn btn-outline-secondary btn-sm">View All</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table report-table">
+                <thead>
+                    <tr>
+                        <th>Ref</th>
+                        <th>Category</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Received</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.RecentComplaints)
+                    {
+                        var css = c.Status switch
+                        {
+                            "OPEN"          => "status-waiting",
+                            "INVESTIGATING" => "status-assigned",
+                            "RESOLVED"      => "status-picked",
+                            _               => "status-waiting"
+                        };
+                        <tr>
+                            <td><strong>@c.ComplaintRef</strong></td>
+                            <td>@c.Category</td>
+                            <td>@c.Description</td>
+                            <td><span class="@css">@c.Status</span></td>
+                            <td>@c.TimeAgo()</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

@@ -4,124 +4,130 @@
 
 <div class="page-header">
     <div>
-        <h2>Settings</h2>
-        <p class="text-muted">Manage app preferences, integrations, and security controls for TaxiConnect SA.</p>
+        <h2>⚙️ Settings</h2>
+        <p class="text-muted">Manage preferences and security controls for TaxiConnect SA.</p>
     </div>
 </div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mt-3">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
 
 <div class="dashboard-card">
     <div class="row gy-4">
+
+        @* General Settings *@
         <div class="col-12 col-xl-6">
             <div class="booking-card">
                 <h4 class="mb-4">General Settings</h4>
-
-                <form>
+                <form method="post">
+                    @Html.AntiForgeryToken()
                     <div class="mb-3">
-                        <label class="form-label">Association Name</label>
-                        <input type="text" class="form-control" value="TaxiConnect SA" />
+                        <label class="form-label fw-bold">Association Name</label>
+                        <input type="text" name="associationName" class="form-control" value="TaxiConnect SA" />
                     </div>
-
                     <div class="mb-3">
-                        <label class="form-label">Office Email</label>
-                        <input type="email" class="form-control" value="support@taxiconnectsa.com" />
+                        <label class="form-label fw-bold">Office Email</label>
+                        <input type="email" name="officeEmail" class="form-control" value="support@taxiconnectsa.com" />
                     </div>
-
                     <div class="mb-3">
-                        <label class="form-label">Contact Number</label>
-                        <input type="tel" class="form-control" value="+27 11 123 4567" />
+                        <label class="form-label fw-bold">Contact Number</label>
+                        <input type="tel" name="contactNumber" class="form-control" value="+27 11 123 4567" />
                     </div>
-
                     <div class="mb-3">
-                        <label class="form-label">Timezone</label>
+                        <label class="form-label fw-bold">Timezone</label>
                         <select class="form-select">
-                            <option selected>South Africa Standard Time (SAST)</option>
+                            <option selected>South Africa Standard Time (SAST, UTC+2)</option>
                             <option>UTC</option>
-                            <option>GMT+1</option>
-                            <option>GMT+2</option>
                         </select>
                     </div>
-
-                    <button type="submit" class="btn btn-warning">Save General Settings</button>
+                    <button type="submit" class="new-booking">Save Settings</button>
                 </form>
             </div>
         </div>
 
+        @* Firebase Status *@
         <div class="col-12 col-xl-6">
             <div class="booking-card">
-                <h4 class="mb-4">Integration Settings</h4>
+                <h4 class="mb-4">System Status</h4>
 
-                <form>
-                    <div class="mb-3">
-                        <label class="form-label">Firebase Project ID</label>
-                        <input type="text" class="form-control" placeholder="taxiconnectsa" />
+                <div class="mb-3 p-3 rounded" style="background:#f8f9fa;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Firebase Connection</span>
+                        <span id="fbStatus" class="badge bg-secondary">Checking...</span>
                     </div>
+                    <small class="text-muted">Project: taxiconnectsa-8dc27</small>
+                </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Service Account Path</label>
-                        <input type="text" class="form-control" placeholder="firebase-key.json" />
+                <div class="mb-3 p-3 rounded" style="background:#f8f9fa;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Urgent Booking Threshold</span>
+                        <span class="badge bg-warning text-dark">6 minutes</span>
                     </div>
+                    <small class="text-muted">Bookings waiting longer than this appear as urgent</small>
+                </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">SMS Provider</label>
-                        <input type="text" class="form-control" value="Clickatell" />
+                <div class="mb-3 p-3 rounded" style="background:#f8f9fa;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">Session Duration</span>
+                        <span class="badge bg-info">8 hours</span>
                     </div>
+                    <small class="text-muted">Marshal is automatically logged out after 8 hours</small>
+                </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Support Portal URL</label>
-                        <input type="url" class="form-control" placeholder="https://support.taxiconnectsa.com" />
+                <div class="mb-3 p-3 rounded" style="background:#f8f9fa;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">App Version</span>
+                        <span class="badge bg-secondary">v1.0.0</span>
                     </div>
-
-                    <button type="submit" class="btn btn-warning">Save Integration Settings</button>
-                </form>
+                    <small class="text-muted">TaxiConnect SA Marshal Dashboard</small>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row mt-4 gy-4">
-    <div class="col-12 col-lg-6">
-        <div class="booking-card">
-            <h4 class="mb-4">Security</h4>
-
-            <div class="form-check form-switch mb-3">
-                <input class="form-check-input" type="checkbox" id="requireAuth" checked />
-                <label class="form-check-label" for="requireAuth">Require login for all drivers</label>
-            </div>
-
-            <div class="form-check form-switch mb-3">
-                <input class="form-check-input" type="checkbox" id="emailVerification" checked />
-                <label class="form-check-label" for="emailVerification">Require email verification</label>
-            </div>
-
-            <div class="form-check form-switch mb-3">
-                <input class="form-check-input" type="checkbox" id="enableAudit" />
-                <label class="form-check-label" for="enableAudit">Enable audit logging</label>
-            </div>
-
-            <button type="button" class="btn btn-outline-secondary">Update Security</button>
-        </div>
+@* Change Password *@
+<div class="booking-card" style="max-width: 500px; margin-top: 20px;">
+    <h4 class="mb-4">🔒 Change Password</h4>
+    <div class="mb-3">
+        <label class="form-label fw-bold">Current Password</label>
+        <input type="password" class="form-control" placeholder="Enter current password" />
     </div>
-
-    <div class="col-12 col-lg-6">
-        <div class="booking-card">
-            <h4 class="mb-4">Notifications</h4>
-
-            <div class="form-check form-switch mb-3">
-                <input class="form-check-input" type="checkbox" id="pushAlerts" checked />
-                <label class="form-check-label" for="pushAlerts">Push alerts for new bookings</label>
-            </div>
-
-            <div class="form-check form-switch mb-3">
-                <input class="form-check-input" type="checkbox" id="smsAlerts" />
-                <label class="form-check-label" for="smsAlerts">SMS notifications for drivers</label>
-            </div>
-
-            <div class="form-check form-switch mb-3">
-                <input class="form-check-input" type="checkbox" id="weeklySummary" checked />
-                <label class="form-check-label" for="weeklySummary">Weekly summary email</label>
-            </div>
-
-            <button type="button" class="btn btn-outline-secondary">Update Notifications</button>
-        </div>
+    <div class="mb-3">
+        <label class="form-label fw-bold">New Password</label>
+        <input type="password" class="form-control" placeholder="Enter new password" />
     </div>
+    <div class="mb-4">
+        <label class="form-label fw-bold">Confirm New Password</label>
+        <input type="password" class="form-control" placeholder="Confirm new password" />
+    </div>
+    <button type="button" class="btn btn-outline-secondary"
+            onclick="alert('Password change requires backend integration.')">
+        Update Password
+    </button>
 </div>
+
+@section Scripts {
+    <script>
+        // Check Firebase connection by pinging the page
+        fetch('/').then(r => {
+            const el = document.getElementById('fbStatus');
+            if (r.ok) {
+                el.textContent = 'Connected';
+                el.className = 'badge bg-success';
+            } else {
+                el.textContent = 'Error';
+                el.className = 'badge bg-danger';
+            }
+        }).catch(() => {
+            const el = document.getElementById('fbStatus');
+            el.textContent = 'Offline';
+            el.className = 'badge bg-danger';
+        });
+    </script>
+}

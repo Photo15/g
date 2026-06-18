@@ -1,63 +1,99 @@
+@model IEnumerable<TaxiConnectSA.Models.ComplaintModel>
 @{
-    ViewData["Title"] = "Complaints Management";
+    ViewData["Title"] = "Complaints";
+    var all = Model.ToList();
+    var open       = all.Count(c => c.Status == "OPEN");
+    var investing  = all.Count(c => c.Status == "INVESTIGATING");
+    var resolved   = all.Count(c => c.Status == "RESOLVED");
 }
 
 <div class="page-header">
-    <h2>Complaints Management</h2>
+    <h2>📢 Complaints</h2>
 </div>
 
-<div class="booking-card">
+@if (ViewBag.FirebaseError != null)
+{
+    <div class="alert alert-warning mt-3">
+        <strong>Firebase not configured:</strong> @ViewBag.FirebaseError
+    </div>
+}
 
-    <h4>All Complaints</h4>
-
-    <table class="table">
-
-        <thead>
-            <tr>
-                <th>Complaint ID</th>
-                <th>Description</th>
-                <th>Category</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-            <tr>
-                <td>C001</td>
-                <td>Driver was rude to passenger</td>
-                <td>Driver Behaviour</td>
-                <td>
-                    <span class="status-waiting">
-                        OPEN
-                    </span>
-                </td>
-            </tr>
-
-            <tr>
-                <td>C002</td>
-                <td>Taxi did not arrive on time</td>
-                <td>Service Delay</td>
-                <td>
-                    <span class="status-assigned">
-                        INVESTIGATING
-                    </span>
-                </td>
-            </tr>
-
-            <tr>
-                <td>C003</td>
-                <td>Overcharged passenger</td>
-                <td>Fare Issue</td>
-                <td>
-                    <span class="status-picked">
-                        RESOLVED
-                    </span>
-                </td>
-            </tr>
-
-        </tbody>
-
-    </table>
-
+@* Summary tiles *@
+<div class="stats">
+    <div class="stat-card waiting">
+        <i class="fa fa-exclamation-circle"></i>
+        <h6>OPEN</h6>
+        <h2>@open</h2>
+    </div>
+    <div class="stat-card assigned">
+        <i class="fa fa-search"></i>
+        <h6>INVESTIGATING</h6>
+        <h2>@investing</h2>
+    </div>
+    <div class="stat-card picked">
+        <i class="fa fa-circle-check"></i>
+        <h6>RESOLVED</h6>
+        <h2>@resolved</h2>
+    </div>
 </div>
+
+<div class="booking-card" style="margin-top: 20px;">
+    <div class="table-header">
+        <h4>All Complaints</h4>
+        <input type="text" id="searchInput" class="search-box"
+               placeholder="Search complaints..." oninput="filterTable()" />
+    </div>
+
+    @if (!all.Any())
+    {
+        <p class="text-muted text-center py-4">No complaints recorded yet.</p>
+    }
+    else
+    {
+        <table class="table" id="complaintsTable">
+            <thead>
+                <tr>
+                    <th>Ref</th>
+                    <th>Passenger</th>
+                    <th>Booking Ref</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Received</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in all)
+                {
+                    var statusCss = c.Status switch
+                    {
+                        "OPEN"          => "status-waiting",
+                        "INVESTIGATING" => "status-assigned",
+                        "RESOLVED"      => "status-picked",
+                        _               => "status-waiting"
+                    };
+                    <tr>
+                        <td><strong>@c.ComplaintRef</strong></td>
+                        <td>@c.PassengerName</td>
+                        <td>@(string.IsNullOrEmpty(c.BookingRef) ? "—" : c.BookingRef)</td>
+                        <td>@c.Category</td>
+                        <td>@c.Description</td>
+                        <td><span class="@statusCss">@c.Status</span></td>
+                        <td>@c.TimeAgo()</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function filterTable() {
+            const q = document.getElementById("searchInput").value.toLowerCase();
+            document.querySelectorAll("#complaintsTable tbody tr").forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(q) ? "" : "none";
+            });
+        }
+    </script>
+}

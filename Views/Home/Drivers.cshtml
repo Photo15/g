@@ -1,71 +1,134 @@
 ﻿@model IEnumerable<TaxiConnectSA.Models.DriverViewModel>
-
 @{
     ViewData["Title"] = "Drivers";
+    var available = Model.Where(d => d.Status is "IDLE" or "AVAILABLE" or "ACTIVE").ToList();
+    var busy      = Model.Where(d => d.Status == "BUSY").ToList();
+    var all       = Model.ToList();
 }
 
 <div class="page-header">
-    <h2>Drivers</h2>
+    <h2>🚗 Drivers at Rank</h2>
 </div>
 
 @if (ViewBag.FirebaseError != null)
 {
-    <div class="alert alert-warning" role="alert">
+    <div class="alert alert-warning mt-3">
         <strong>Firebase not configured:</strong> @ViewBag.FirebaseError
     </div>
 }
 
+@* Summary tiles *@
 <div class="stats">
-
+    <div class="stat-card picked">
+        <i class="fa fa-circle-check"></i>
+        <h6>AVAILABLE AT RANK</h6>
+        <h2>@available.Count</h2>
+    </div>
     <div class="stat-card assigned">
-        <h5>Active Drivers</h5>
-        <h2>@Model.Count(d => string.Equals(d.Status, "ACTIVE", StringComparison.OrdinalIgnoreCase))</h2>
+        <i class="fa fa-car-side"></i>
+        <h6>ON TRIP</h6>
+        <h2>@busy.Count</h2>
     </div>
-
-    <div class="stat-card waiting">
-        <h5>Idle Drivers</h5>
-        <h2>@Model.Count(d => string.Equals(d.Status, "IDLE", StringComparison.OrdinalIgnoreCase))</h2>
+    <div class="stat-card completed">
+        <i class="fa fa-users"></i>
+        <h6>TOTAL DRIVERS</h6>
+        <h2>@all.Count</h2>
     </div>
-
 </div>
 
-<div class="booking-card">
+@* Available drivers — prominent section *@
+<div class="booking-card" style="margin-top: 20px;">
+    <div class="table-header">
+        <h4>✅ Available at Rank Now</h4>
+        <span class="badge bg-success fs-6">@available.Count driver(s) ready</span>
+    </div>
 
-    <h4>Driver List</h4>
-
-    <table class="table">
-
-        <thead>
-            <tr>
-                <th>Driver Name</th>
-                <th>Taxi Number</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-
-        <tbody>
-            @if (!Model.Any())
-            {
+    @if (!available.Any())
+    {
+        <div class="alert alert-warning mb-0">
+            No drivers available at the rank right now.
+        </div>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
                 <tr>
-                    <td colspan="3">No drivers found.</td>
+                    <th>Driver Name</th>
+                    <th>Taxi Number</th>
+                    <th>Status</th>
                 </tr>
-            }
-            else
-            {
-                foreach (var driver in Model)
+            </thead>
+            <tbody>
+                @foreach (var d in available)
                 {
-                    var status = (driver.Status ?? "UNKNOWN").ToUpperInvariant();
-                    var cssClass = status == "ACTIVE" ? "status-picked" : "status-waiting";
                     <tr>
-                        <td>@driver.Name</td>
-                        <td>@driver.TaxiNumber</td>
-                        <td><span class="@cssClass">@status</span></td>
+                        <td><strong>@d.Name</strong></td>
+                        <td>@d.TaxiNumber</td>
+                        <td><span class="status-picked">AVAILABLE</span></td>
                     </tr>
                 }
-            }
-        </tbody>
-
-    </table>
+            </tbody>
+        </table>
+    }
 </div>
 
+@* All drivers table *@
+<div class="booking-card" style="margin-top: 20px;">
+    <div class="table-header">
+        <h4>All Drivers</h4>
+        <input type="text" id="driverSearch" class="search-box"
+               placeholder="Search driver..." oninput="filterDrivers()" />
+    </div>
+
+    @if (!all.Any())
+    {
+        <p class="text-muted text-center py-4">No drivers found in Firestore.</p>
+    }
+    else
+    {
+        <table class="table" id="driversTable">
+            <thead>
+                <tr>
+                    <th>Driver Name</th>
+                    <th>Taxi Number</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in all)
+                {
+                    var st = (d.Status ?? "UNKNOWN").ToUpperInvariant();
+                    var css = st switch
+                    {
+                        "IDLE" or "AVAILABLE" or "ACTIVE" => "status-picked",
+                        "BUSY"                            => "status-assigned",
+                        _                                 => "status-waiting"
+                    };
+                    var label = st switch
+                    {
+                        "IDLE" or "AVAILABLE" or "ACTIVE" => "AVAILABLE",
+                        "BUSY"                            => "ON TRIP",
+                        _                                 => st
+                    };
+                    <tr>
+                        <td>@d.Name</td>
+                        <td>@d.TaxiNumber</td>
+                        <td><span class="@css">@label</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 </div>
+
+@section Scripts {
+    <script>
+        function filterDrivers() {
+            const q = document.getElementById("driverSearch").value.toLowerCase();
+            document.querySelectorAll("#driversTable tbody tr").forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(q) ? "" : "none";
+            });
+        }
+    </script>
+}

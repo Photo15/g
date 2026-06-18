@@ -1,222 +1,269 @@
-﻿@{
+﻿@model TaxiConnectSA.Models.DashboardViewModel
+@{
     ViewData["Title"] = "Marshal Dashboard";
+    var currentStatus = ViewBag.CurrentStatus as string ?? "All";
+    var currentSearch = ViewBag.CurrentSearch as string ?? "";
 }
 
 <div class="page-header">
-
     <h2>🏠 Marshal Dashboard</h2>
-
     <div class="header-actions">
-
-        <button class="new-booking">
-            + New Booking
-        </button>
-
+        <a href="/Bookings/New" class="new-booking">+ Urgent Trip</a>
         <i class="fa-solid fa-bell notification"></i>
-
     </div>
-
 </div>
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (Model.FirebaseError != null)
+{
+    <div class="alert alert-warning mt-3">
+        <strong>Firebase not configured:</strong> @Model.FirebaseError
+    </div>
+}
+
+@* Status Tiles *@
 <div class="dashboard-card">
-
     <h3>Live Bookings</h3>
-
     <div class="stats">
-
         <div class="stat-card waiting">
             <i class="fa-solid fa-clock"></i>
             <h6>WAITING</h6>
-            <h2>12</h2>
+            <h2>@Model.WaitingCount</h2>
         </div>
-
         <div class="stat-card assigned">
             <i class="fa-solid fa-user-check"></i>
             <h6>ASSIGNED</h6>
-            <h2>8</h2>
+            <h2>@Model.AssignedCount</h2>
         </div>
-
         <div class="stat-card picked">
             <i class="fa-solid fa-car-side"></i>
             <h6>PICKED UP</h6>
-            <h2>15</h2>
+            <h2>@Model.PickedUpCount</h2>
         </div>
-
         <div class="stat-card completed">
             <i class="fa-solid fa-circle-check"></i>
             <h6>COMPLETED</h6>
-            <h2>32</h2>
+            <h2>@Model.CompletedCount</h2>
         </div>
-
     </div>
-
 </div>
 
+@* Bookings Table *@
 <div class="booking-card">
-
-    <div class="table-header">
-
         <h4>All Bookings</h4>
-
-        <div class="filters">
-
-            <select class="status-filter">
-                <option>All Status</option>
-                <option>Waiting</option>
-                <option>Assigned</option>
-                <option>Picked Up</option>
-                <option>Completed</option>
+        <form method="get" action="/" class="filters">
+            <select name="status" class="status-filter" onchange="this.form.submit()">
+                @{
+                    string? Sel(string v) => currentStatus == v ? "selected" : null;
+                }
+                <option value="All" selected="@Sel("All")">All Status</option>
+                <option value="WAITING" selected="@Sel("WAITING")">Waiting</option>
+                <option value="ASSIGNED" selected="@Sel("ASSIGNED")">Assigned</option>
+                <option value="PICKED UP" selected="@Sel("PICKED UP")">Picked Up</option>
+                <option value="COMPLETED" selected="@Sel("COMPLETED")">Completed</option>
             </select>
-
-            <input type="text"
-                   class="search-box"
-                   placeholder="Search location or reference..." />
-
-        </div>
-
+            <input type="text" name="q" class="search-box"
+                   placeholder="Search location or ref..."
+                   value="@currentSearch" />
+            <button type="submit" class="btn btn-outline-secondary btn-sm">Search</button>
+        </form>
     </div>
 
-    <table class="table">
-
-        <thead>
-            <tr>
-                <th>Ref No</th>
-                <th>Pickup Location</th>
-                <th>Passengers</th>
-                <th>Status</th>
-                <th>Time</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-
-        <tbody>
-
-            <tr>
-                <td>T1234</td>
-                <td>Madiba Street, Tembisa</td>
-                <td>1</td>
-                <td>
-                    <span class="status-waiting">
-                        WAITING
-                    </span>
-                </td>
-                <td>08:45</td>
-                <td>
-                    <button class="btn btn-primary btn-sm">
-                        Assign
-                    </button>
-                </td>
-            </tr>
-
-            <tr>
-                <td>T1235</td>
-                <td>Oakmoor, Tembisa</td>
-                <td>2</td>
-                <td>
-                    <span class="status-assigned">
-                        ASSIGNED
-                    </span>
-                </td>
-                <td>08:43</td>
-                <td>
-                    <button class="btn btn-outline-primary btn-sm">
-                        View
-                    </button>
-                </td>
-            </tr>
-
-            <tr>
-                <td>T1236</td>
-                <td>Rabasotho, Tembisa</td>
-                <td>1</td>
-                <td>
-                    <span class="status-picked">
-                        PICKED UP
-                    </span>
-                </td>
-                <td>08:40</td>
-                <td>
-                    <button class="btn btn-outline-success btn-sm">
-                        Track
-                    </button>
-                </td>
-            </tr>
-
-            <tr>
-                <td>T1237</td>
-                <td>Winnie Mandela, Tembisa</td>
-                <td>3</td>
-                <td>
-                    <span class="status-waiting">
-                        WAITING
-                    </span>
-                </td>
-                <td>08:38</td>
-                <td>
-                    <button class="btn btn-primary btn-sm">
-                        Assign
-                    </button>
-                </td>
-            </tr>
-
-            <tr>
-                <td>T1238</td>
-                <td>Straight-Line, Tembisa</td>
-                <td>1</td>
-                <td>
-                    <span class="status-completed">
-                        COMPLETED
-                    </span>
-                </td>
-                <td>08:30</td>
-                <td>
-                    <button class="btn btn-outline-secondary btn-sm">
-                        Details
-                    </button>
-                </td>
-            </tr>
-
-        </tbody>
-
-    </table>
-
+    @if (!Model.Bookings.Any())
+    {
+        <p class="text-muted text-center py-4">No bookings found.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Ref No</th>
+                    <th>Pickup Location</th>
+                    <th>Passengers</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model.Bookings)
+                {
+                    var statusClass = b.Status switch
+                    {
+                        "WAITING"   => "status-waiting",
+                        "ASSIGNED"  => "status-assigned",
+                        "PICKED UP" => "status-picked",
+                        "COMPLETED" => "status-completed",
+                        _           => "status-waiting"
+                    };
+                    <tr>
+                        <td><strong>@b.ReferenceNo</strong></td>
+                        <td>@b.PickupLocation</td>
+                        <td>@b.Passengers</td>
+                        <td><span class="@statusClass">@b.Status</span></td>
+                        <td>@b.TimeAgo()</td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                                        type="button" data-bs-toggle="dropdown">
+                                    Action
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <button type="button" class="dropdown-item"
+                                                onclick="openAssignModal('@b.Id', '@Html.Raw(b.ReferenceNo)', '@Html.Raw(b.PickupLocation)', '@b.TimeAgo()')">
+                                            <i class="fa fa-user-check me-2 text-primary"></i>Assign
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <form method="post" action="/Bookings/UpdateStatus" class="m-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="bookingId" value="@b.Id" />
+                                            <input type="hidden" name="newStatus" value="PICKED UP" />
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="fa fa-car me-2 text-warning"></i>Pending
+                                            </button>
+                                        </form>
+                                    </li>
+                                    <li>
+                                        <form method="post" action="/Bookings/UpdateStatus" class="m-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="bookingId" value="@b.Id" />
+                                            <input type="hidden" name="newStatus" value="COMPLETED" />
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="fa fa-circle-check me-2 text-success"></i>Complete
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
 </div>
 
-<partial name="_ActionModals" />
-
+@* Urgent Attention + Recent Activity *@
 <div class="bottom-cards">
-
     <div class="alert-card">
-
         <h5>🚨 Urgent Attention</h5>
-
-        <p>
-            2 bookings waiting more than 6 minutes.
-        </p>
-
-        <button class="btn btn-light">
-            View All
-        </button>
-
+        @if (!Model.UrgentBookings.Any())
+        {
+            <p class="text-muted">No urgent bookings right now.</p>
+        }
+        else
+        {
+            <p>@Model.UrgentBookings.Count booking(s) waiting more than 6 minutes.</p>
+            <ul class="list-unstyled mb-0">
+                @foreach (var u in Model.UrgentBookings.Take(5))
+                {
+                    <li class="py-1 border-bottom">
+                        <strong>@u.ReferenceNo</strong> — @u.PickupLocation
+                        <span class="text-danger small ms-1">(Waiting @((int)u.MinutesWaiting) min)</span>
+                        <button class="btn btn-danger btn-sm ms-2"
+                                onclick="openAssignModal('@u.Id', '@Html.Raw(u.ReferenceNo)', '@Html.Raw(u.PickupLocation)', '@u.TimeAgo()')">
+                            Urgent Assign
+                        </button>
+                    </li>
+                }
+            </ul>
+        }
     </div>
 
     <div class="activity-card">
-
         <h5>📋 Recent Activity</h5>
-
-        <p>Driver Sipho accepted booking T1235</p>
-        <small>1 minute ago</small>
-
-        <hr>
-
-        <p>Driver Thabo completed booking T1231</p>
-        <small>4 minutes ago</small>
-
-        <hr>
-
-        <p>New booking received from Oakmoor Station</p>
-        <small>8 minutes ago</small>
-
+        @if (!Model.AllBookings.Any())
+        {
+            <p class="text-muted">No recent activity.</p>
+        }
+        else
+        {
+            @foreach (var b in Model.AllBookings.Take(5))
+            {
+                <p class="mb-0">
+                    @if (!string.IsNullOrEmpty(b.AssignedDriver))
+                    {
+                        <span>Driver <strong>@b.AssignedDriver</strong> on <strong>@b.ReferenceNo</strong></span>
+                    }
+                    else
+                    {
+                        <span>Booking <strong>@b.ReferenceNo</strong> from @b.PickupLocation</span>
+                    }
+                </p>
+                <small class="text-muted">@b.TimeAgo()</small>
+                <hr class="my-2" />
+            }
+        }
     </div>
-
 </div>
+
+@* Assign Driver Modal *@
+<div class="modal fade" id="assignModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Urgent Assign Driver</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="/Bookings/Assign">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="bookingId" id="modalBookingId" />
+                <div class="modal-body">
+                    <p class="mb-1"><strong>Booking:</strong> <span id="modalRef"></span></p>
+                    <p class="mb-1"><strong>Pickup:</strong> <span id="modalLocation"></span></p>
+                    <p class="mb-3"><strong>Time:</strong> <span id="modalTime"></span></p>
+                    @if (!Model.AvailableDrivers.Any())
+                    {
+                        <div class="alert alert-warning mb-0">No available drivers at this time.</div>
+                    }
+                    else
+                    {
+                        <label class="form-label fw-bold">Select Driver</label>
+                        <select name="driverId" class="form-select" required>
+                            <option value="">-- Choose a driver --</option>
+                            @foreach (var d in Model.AvailableDrivers)
+                            {
+                                <option value="@d.Id">@d.Name — @d.TaxiNumber</option>
+                            }
+                        </select>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    @if (Model.AvailableDrivers.Any())
+                    {
+                        <button type="submit" class="btn btn-primary">Confirm Assignment</button>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openAssignModal(bookingId, ref, location, time) {
+            document.getElementById("modalBookingId").value = bookingId;
+            document.getElementById("modalRef").textContent = ref;
+            document.getElementById("modalLocation").textContent = location;
+            document.getElementById("modalTime").textContent = time;
+            new bootstrap.Modal(document.getElementById("assignModal")).show();
+        }
+    </script>
+}
