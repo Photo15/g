@@ -6,6 +6,11 @@
 
     <title>@ViewData["Title"] - TaxiConnect SA</title>
 
+    <!-- Firebase web config (set these in appsettings.json under Firebase:WebApiKey etc.) -->
+    <meta name="fb-project-id"   content="taxiconnectsa-8dc27" />
+    <meta name="fb-auth-domain"  content="taxiconnectsa-8dc27.firebaseapp.com" />
+    <meta name="fb-api-key"      content="@(ViewBag.FirebaseWebApiKey ?? "")" />
+
     <!-- Bootstrap -->
     <link rel="stylesheet"
           href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -54,6 +59,33 @@
 
     <script src="~/js/site.js"
             asp-append-version="true"></script>
+
+    <!-- Firebase JS SDK (real-time listeners) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey:      document.querySelector('meta[name="fb-api-key"]')?.content      || "",
+            authDomain:  document.querySelector('meta[name="fb-auth-domain"]')?.content  || "",
+            projectId:   document.querySelector('meta[name="fb-project-id"]')?.content   || "taxiconnectsa-8dc27"
+        };
+
+        if (firebaseConfig.apiKey) {
+            const app = initializeApp(firebaseConfig, "marshal-rt");
+            const db  = getFirestore(app);
+
+            window.__rtDb         = db;
+            window.__rtCollection = collection;
+            window.__rtOnSnapshot = onSnapshot;
+            window.__rtQuery      = query;
+            window.__rtOrderBy    = orderBy;
+            window.__rtDoc        = doc;
+            window.__rtUpdateDoc  = updateDoc;
+
+            document.dispatchEvent(new Event("firestoreReady"));
+        }
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 

@@ -41,23 +41,57 @@
         <div class="stat-card waiting">
             <i class="fa-solid fa-clock"></i>
             <h6>WAITING</h6>
-            <h2>@Model.WaitingCount</h2>
+            <h2 id="rtWaiting">@Model.WaitingCount</h2>
         </div>
         <div class="stat-card assigned">
             <i class="fa-solid fa-user-check"></i>
             <h6>ASSIGNED</h6>
-            <h2>@Model.AssignedCount</h2>
+            <h2 id="rtAssigned">@Model.AssignedCount</h2>
         </div>
         <div class="stat-card picked">
             <i class="fa-solid fa-car-side"></i>
             <h6>PICKED UP</h6>
-            <h2>@Model.PickedUpCount</h2>
+            <h2 id="rtPickedUp">@Model.PickedUpCount</h2>
         </div>
         <div class="stat-card completed">
             <i class="fa-solid fa-circle-check"></i>
             <h6>COMPLETED</h6>
-            <h2>@Model.CompletedCount</h2>
+            <h2 id="rtCompleted">@Model.CompletedCount</h2>
         </div>
+    </div>
+</div>
+
+@* Drivers at Rank — live *@
+<div class="dashboard-card" style="margin-top: 15px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h5 style="margin:0;">
+            🚗 Drivers at Rank
+            <span id="rtAvailBadge" class="badge bg-success ms-2">@Model.AvailableDrivers.Count available</span>
+        </h5>
+        <a href="/Drivers" class="btn btn-outline-secondary btn-sm">View All Drivers</a>
+    </div>
+    <div class="dropdown mt-2">
+        <button class="btn btn-outline-success btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="fa fa-car me-1"></i> Available Drivers (<span id="rtAvailCount">@Model.AvailableDrivers.Count</span>)
+        </button>
+        <ul class="dropdown-menu" id="rtDriverList">
+            @if (!Model.AvailableDrivers.Any())
+            {
+                <li><span class="dropdown-item text-muted">No drivers available</span></li>
+            }
+            else
+            {
+                @foreach (var d in Model.AvailableDrivers)
+                {
+                    <li>
+                        <span class="dropdown-item">
+                            <i class="fa fa-circle text-success me-2" style="font-size:10px;"></i>
+                            <strong>@d.Name</strong>@(string.IsNullOrEmpty(d.TaxiNumber) ? "" : $" — {d.TaxiNumber}")
+                        </span>
+                    </li>
+                }
+            }
+        </ul>
     </div>
 </div>
 
@@ -265,5 +299,97 @@
             document.getElementById("modalTime").textContent = time;
             new bootstrap.Modal(document.getElementById("assignModal")).show();
         }
+
+        // ── Real-time Firestore listeners ──────────────────────────────
+        function startRealTimeListeners() {
+            const db  = window.__rtDb;
+            const col = window.__rtCollection;
+            const snp = window.__rtOnSnapshot;
+            if (!db) return;
+
+            const availStatuses = ["IDLE", "AVAILABLE", "ACTIVE"];
+
+            // Listen to drivers collection
+            snp(col(db, "drivers"), (snapshot) => {
+                let availCount = 0;
+                const driverListEl = document.getElementById("rtDriverList");
+
+                snapshot.forEach(docSnap => {
+                    const d = docSnap.data();
+                    const st = (d.status || "").toUpperCase();
+                    if (availStatuses.includes(st)) availCount++;
+                });
+
+                // Update available driver badge
+                const badge = document.getElementById("rtAvailBadge");
+                if (badge) badge.textContent = availCount + " available";
+                const badgeCount = document.getElementById("rtAvailCount");
+                if (badgeCount) badgeCount.textContent = availCount;
+
+                // Rebuild available drivers dropdown
+                if (driverListEl) {
+                    driverListEl.innerHTML = "";
+                    snapshot.forEach(docSnap => {
+                        const d = docSnap.data();
+                        const st = (d.status || "").toUpperCase();
+                        if (!availStatuses.includes(st)) return;
+
+                        const li = document.createElement("li");
+                        const name = d.name || d.driverName || "Unknown";
+                        const taxi = d.taxiNumber || d.taxi || "";
+                        li.innerHTML = `<span class="dropdown-item">
+                            <i class="fa fa-circle text-success me-2" style="font-size:10px;"></i>
+                            <strong>${name}</strong>${taxi ? " — " + taxi : ""}
+                        </span>`;
+                        driverListEl.appendChild(li);
+                    });
+
+                    if (driverListEl.children.length === 0) {
+                        driverListEl.innerHTML = "<li><span class='dropdown-item text-muted'>No drivers available</span></li>";
+                    }
+                }
+
+                // Also update the assign modal driver select
+                const driverSelect = document.querySelector("select[name='driverId']");
+                if (driverSelect) {
+                    const current = driverSelect.value;
+                    driverSelect.innerHTML = "<option value=''>-- Choose a driver --</option>";
+                    snapshot.forEach(docSnap => {
+                        const d = docSnap.data();
+                        const st = (d.status || "").toUpperCase();
+                        if (!availStatuses.includes(st)) return;
+                        const name = d.name || d.driverName || "Unknown";
+                        const taxi = d.taxiNumber || d.taxi || "";
+                        const opt = document.createElement("option");
+                        opt.value = docSnap.id;
+                        opt.textContent = `${name}${taxi ? " — " + taxi : ""}`;
+                        if (docSnap.id === current) opt.selected = true;
+                        driverSelect.appendChild(opt);
+                    });
+                }
+            });
+
+            // Listen to bookings — update tile counts in real time
+            snp(col(db, "bookings"), (snapshot) => {
+                let waiting = 0, assigned = 0, pickedUp = 0, completed = 0;
+                snapshot.forEach(docSnap => {
+                    const st = (docSnap.data().status || "").toUpperCase();
+                    if (st === "WAITING")   waiting++;
+                    if (st === "ASSIGNED")  assigned++;
+                    if (st === "PICKED UP") pickedUp++;
+                    if (st === "COMPLETED") completed++;
+                });
+
+                const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+                set("rtWaiting",   waiting);
+                set("rtAssigned",  assigned);
+                set("rtPickedUp",  pickedUp);
+                set("rtCompleted", completed);
+            });
+        }
+
+        document.addEventListener("firestoreReady", startRealTimeListeners);
+        // If already fired before this script ran
+        if (window.__rtDb) startRealTimeListeners();
     </script>
 }

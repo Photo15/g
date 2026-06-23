@@ -61,12 +61,58 @@ namespace TaxiConnectSA.Services
             foreach (var doc in snapshot.Documents)
             {
                 var d = doc.ToDictionary();
+
+                // Dump all keys for the first doc to help diagnose field name mismatches
+                // (visible in application logs)
+                if (drivers.Count == 0)
+                {
+                    var keys = string.Join(", ", d.Keys);
+                    Console.WriteLine($"[FirebaseService] Driver doc keys: {keys}");
+                }
+
+                // Name — cover every common casing variant
+                var name = GetStr(d,
+                    "name", "Name", "driverName", "DriverName",
+                    "fullName", "FullName", "driver_name", "displayName") ?? "";
+
+                // Status
+                var status = (GetStr(d, "status", "Status", "driverStatus") ?? "UNKNOWN").ToUpperInvariant();
+
+                // License plate — cover taxiNumber, taxi, plate, registration etc.
+                var plate = GetStr(d,
+                    "licensePlate", "LicensePlate", "license_plate",
+                    "taxiNumber", "TaxiNumber", "taxi", "Taxi",
+                    "registration", "Registration", "plateNumber", "plate") ?? "";
+
+                // Vehicle
+                var vehicle = GetStr(d,
+                    "vehicle", "Vehicle", "vehicleType", "VehicleType",
+                    "carType", "CarType", "car", "Car",
+                    "vehicleModel", "model", "Model") ?? "";
+
+                // Phone
+                var phone = GetStr(d,
+                    "phone", "Phone", "phoneNumber", "PhoneNumber",
+                    "phone_number", "contact", "Contact",
+                    "mobile", "Mobile", "cellphone") ?? "";
+
+                // Rating
+                var ratingStr = GetStr(d, "rating", "Rating", "score", "Score") ?? "0";
+                double.TryParse(ratingStr, out var rating);
+
                 drivers.Add(new DriverViewModel
                 {
-                    Id = doc.Id,
-                    Name = GetStr(d, "name", "driverName") ?? "Unknown",
-                    TaxiNumber = GetStr(d, "taxiNumber", "taxi") ?? "N/A",
-                    Status = (GetStr(d, "status") ?? "UNKNOWN").ToUpperInvariant()
+                    Id           = doc.Id,
+                    Name         = string.IsNullOrEmpty(name) ? $"Driver ({doc.Id[..6]})" : name,
+                    Vehicle      = vehicle,
+                    LicensePlate = plate,
+                    Phone        = phone,
+                    TaxiNumber   = plate,
+                    Status       = status,
+                    Rating       = rating,
+                    Route        = GetStr(d, "route", "Route", "destination") ?? "",
+                    TaxiRank     = GetStr(d, "taxiRank", "TaxiRank", "rank", "Rank", "rankName") ?? "",
+                    RawFields    = d
                 });
             }
             return drivers;
@@ -75,9 +121,8 @@ namespace TaxiConnectSA.Services
         public async Task<List<DriverViewModel>> GetAvailableDriversAsync()
         {
             var all = await GetDriversAsync();
-            return all.Where(d => d.Status is "IDLE" or "AVAILABLE" or "ACTIVE").ToList();
+            return all.Where(d => d.IsAvailable).ToList();
         }
-
         // ── Bookings ──────────────────────────────────────────────────────
 
         public async Task<List<BookingModel>> GetBookingsAsync()
@@ -242,6 +287,125 @@ namespace TaxiConnectSA.Services
                 RecentComplaints = complaints.Take(5).ToList(),
                 FirebaseError    = ErrorMessage
             };
+        }
+
+        // ── Trips (SA Rank Workflow) ──────────────────────────────────────
+
+        public async Task<string> DepartTaxiAsync(DepartTaxiViewModel vm)
+        {
+            if (!IsEnabled || Firestore == null)
+                throw new InvalidOperationException("Firebase is not enabled.");
+
+            var now = DateTime.UtcNow;
+
+            // Generate trip reference
+            var todayStr = now.ToString("yyyyMMdd");
+            var todaySnap = await Firestore.Collection("trips")
+                .WhereGreaterThanOrEqualTo("departureTime", now.Date)
+                .WhereLessThan("departureTime", now.Date.AddDays(1))
+                .GetSnapshotAsync();
+
+            var tripRef = $"TR-{todayStr}-{(todaySnap.Count + 1):D4}";
+
+            var tripData = new Dictionary<string, object>
+            {
+                ["tripRef"]       = tripRef,
+                ["driverId"]      = vm.DriverId,
+                ["driverName"]    = vm.DriverName,
+                ["licensePlate"]  = vm.LicensePlate,
+                ["route"]         = vm.Route,
+                ["taxiRank"]      = vm.TaxiRank,
+                ["passengers"]    = vm.Passengers,
+                ["marshalName"]   = vm.MarshalName,
+                ["status"]        = "DEPARTED",
+                ["departureTime"] = now,
+                ["arrivalTime"]   = (object?)null
+            };
+
+            var docRef = await Firestore.Collection("trips").AddAsync(tripData);
+
+            // Update driver status to DEPARTED
+            await Firestore.Collection("drivers").Document(vm.DriverId)
+                .UpdateAsync(new Dictionary<string, object>
+                {
+                    ["status"]        = "DEPARTED",
+                    ["lastTripRef"]   = tripRef,
+                    ["lastTripId"]    = docRef.Id
+                });
+
+            return docRef.Id;
+        }
+
+        public async Task MarkTripArrivedAsync(string tripId)
+        {
+            if (!IsEnabled || Firestore == null) return;
+
+            var tripDoc = await Firestore.Collection("trips").Document(tripId).GetSnapshotAsync();
+            if (!tripDoc.Exists) return;
+
+            var d = tripDoc.ToDictionary();
+            var driverId = GetStr(d, "driverId") ?? "";
+
+            await Firestore.Collection("trips").Document(tripId)
+                .UpdateAsync(new Dictionary<string, object>
+                {
+                    ["status"]      = "ARRIVED",
+                    ["arrivalTime"] = DateTime.UtcNow
+                });
+
+            // Return driver to AVAILABLE
+            if (!string.IsNullOrEmpty(driverId))
+            {
+                await Firestore.Collection("drivers").Document(driverId)
+                    .UpdateAsync(new Dictionary<string, object> { ["status"] = "AVAILABLE" });
+            }
+        }
+
+        public async Task<List<TripModel>> GetTripsAsync(int daysBack = 1)
+        {
+            if (!IsEnabled || Firestore == null) return new();
+
+            var since = DateTime.UtcNow.Date.AddDays(-daysBack);
+            var snapshot = await Firestore.Collection("trips")
+                .WhereGreaterThanOrEqualTo("departureTime", since)
+                .OrderByDescending("departureTime")
+                .GetSnapshotAsync();
+
+            var trips = new List<TripModel>();
+            foreach (var doc in snapshot.Documents)
+            {
+                var d = doc.ToDictionary();
+                DateTime dep = DateTime.UtcNow;
+                DateTime? arr = null;
+
+                if (d.TryGetValue("departureTime", out var dt))
+                {
+                    if (dt is Timestamp ts) dep = ts.ToDateTime();
+                    else if (dt is DateTime dtv) dep = dtv;
+                }
+                if (d.TryGetValue("arrivalTime", out var at) && at != null)
+                {
+                    if (at is Timestamp ts2) arr = ts2.ToDateTime();
+                    else if (at is DateTime atv) arr = atv;
+                }
+
+                trips.Add(new TripModel
+                {
+                    Id            = doc.Id,
+                    TripRef       = GetStr(d, "tripRef") ?? doc.Id[..8],
+                    DriverId      = GetStr(d, "driverId") ?? "",
+                    DriverName    = GetStr(d, "driverName") ?? "Unknown",
+                    LicensePlate  = GetStr(d, "licensePlate") ?? "",
+                    Route         = GetStr(d, "route") ?? "",
+                    TaxiRank      = GetStr(d, "taxiRank") ?? "",
+                    Passengers    = int.TryParse(GetStr(d, "passengers"), out var p) ? p : 0,
+                    MarshalName   = GetStr(d, "marshalName") ?? "",
+                    Status        = (GetStr(d, "status") ?? "DEPARTED").ToUpperInvariant(),
+                    DepartureTime = dep,
+                    ArrivalTime   = arr
+                });
+            }
+            return trips;
         }
 
         // ── Helpers ───────────────────────────────────────────────────────

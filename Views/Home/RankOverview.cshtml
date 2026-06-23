@@ -1,0 +1,347 @@
+@model TaxiConnectSA.Models.RankViewModel
+@{
+    ViewData["Title"] = "Rank Overview";
+}
+
+<div class="page-header">
+    <h2>🚌 Rank Overview</h2>
+    <div class="header-actions">
+        <a href="/RankOverview" class="btn btn-outline-secondary btn-sm">
+            <i class="fa fa-rotate-right me-1"></i> Refresh
+        </a>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mt-3">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mt-3">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (Model.FirebaseError != null)
+{
+    <div class="alert alert-warning mt-3"><strong>Firebase:</strong> @Model.FirebaseError</div>
+}
+
+@* Summary tiles *@
+<div class="stats">
+    <div class="stat-card picked">
+        <i class="fa fa-circle-check"></i>
+        <h6>AVAILABLE</h6>
+        <h2>@Model.AvailableDrivers.Count</h2>
+    </div>
+    <div class="stat-card waiting">
+        <i class="fa fa-users"></i>
+        <h6>LOADING</h6>
+        <h2>@Model.LoadingDrivers.Count</h2>
+    </div>
+    <div class="stat-card assigned">
+        <i class="fa fa-truck-fast"></i>
+        <h6>IN TRANSIT</h6>
+        <h2>@Model.DepartedDrivers.Count</h2>
+    </div>
+    <div class="stat-card completed">
+        <i class="fa fa-flag-checkered"></i>
+        <h6>TRIPS TODAY</h6>
+        <h2>@(Model.ActiveTrips.Count + Model.CompletedTrips.Count)</h2>
+    </div>
+</div>
+
+@* Today passengers transported *@
+<div class="dashboard-card" style="margin-top:15px;">
+    <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">👥 Passengers Transported Today</h5>
+        <span class="badge bg-primary fs-5">@Model.TotalPassengersToday</span>
+    </div>
+</div>
+
+@* Available Drivers — marshal can set to Loading or Depart *@
+<div class="booking-card" style="margin-top:20px;">
+    <div class="table-header">
+        <h4>✅ Available at Rank</h4>
+        <span class="badge bg-success">@Model.AvailableDrivers.Count ready</span>
+    </div>
+    @if (!Model.AvailableDrivers.Any())
+    {
+        <p class="text-muted py-3">No available drivers at the rank right now.</p>
+    }
+    else
+    {
+        <table class="table align-middle">
+            <thead>
+                <tr><th>Driver</th><th>Route</th><th>Vehicle</th><th>License</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.AvailableDrivers)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="driver-avatar">@(d.Name.Length > 0 ? d.Name[0].ToString().ToUpper() : "?")</div>
+                                <div>
+                                    <strong>@d.Name</strong>
+                                    @if (!string.IsNullOrEmpty(d.Phone))
+                                    { <br/><small class="text-muted">@d.Phone</small> }
+                                </div>
+                            </div>
+                        </td>
+                        <td>@(string.IsNullOrEmpty(d.Route) ? "—" : d.Route)</td>
+                        <td>@(string.IsNullOrEmpty(d.Vehicle) ? "—" : d.Vehicle)</td>
+                        <td><code>@(string.IsNullOrEmpty(d.LicensePlate) ? "—" : d.LicensePlate)</code></td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                @* Start Loading *@
+                                <form method="post" action="/Drivers/SetLoading" class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="driverId" value="@d.Id" />
+                                    <button type="submit" class="btn btn-warning btn-sm">
+                                        <i class="fa fa-users me-1"></i>Loading
+                                    </button>
+                                </form>
+                                @* Depart directly *@
+                                <button type="button" class="btn btn-primary btn-sm"
+                                        onclick="openDepartModal('@d.Id','@Html.Raw(d.Name)','@Html.Raw(d.LicensePlate)','@Html.Raw(d.Route)','@Html.Raw(d.TaxiRank)')">
+                                    <i class="fa fa-truck-fast me-1"></i>Depart Taxi
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@* Loading — passengers boarding, ready to depart *@
+@if (Model.LoadingDrivers.Any())
+{
+    <div class="booking-card" style="margin-top:20px;">
+        <div class="table-header">
+            <h4>🟡 Loading — Passengers Boarding</h4>
+            <span class="badge bg-warning text-dark">@Model.LoadingDrivers.Count taxi(s)</span>
+        </div>
+        <table class="table align-middle">
+            <thead>
+                <tr><th>Driver</th><th>Route</th><th>License</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.LoadingDrivers)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="driver-avatar" style="background:#ffc107;color:#000;">
+                                    @(d.Name.Length > 0 ? d.Name[0].ToString().ToUpper() : "?")
+                                </div>
+                                <strong>@d.Name</strong>
+                            </div>
+                        </td>
+                        <td>@(string.IsNullOrEmpty(d.Route) ? "—" : d.Route)</td>
+                        <td><code>@(string.IsNullOrEmpty(d.LicensePlate) ? "—" : d.LicensePlate)</code></td>
+                        <td>
+                            <button type="button" class="btn btn-primary btn-sm"
+                                    onclick="openDepartModal('@d.Id','@Html.Raw(d.Name)','@Html.Raw(d.LicensePlate)','@Html.Raw(d.Route)','@Html.Raw(d.TaxiRank)')">
+                                <i class="fa fa-truck-fast me-1"></i>Depart Taxi (Full)
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@* In Transit — departed, not yet arrived *@
+@if (Model.ActiveTrips.Any())
+{
+    <div class="booking-card" style="margin-top:20px;">
+        <div class="table-header">
+            <h4>🔵 Drivers In Transit</h4>
+            <span class="badge bg-primary">@Model.ActiveTrips.Count on road</span>
+        </div>
+        <table class="table align-middle">
+            <thead>
+                <tr><th>Trip Ref</th><th>Driver</th><th>Route</th><th>Passengers</th><th>Departed</th><th>Marshal</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model.ActiveTrips)
+                {
+                    <tr>
+                        <td><strong>@t.TripRef</strong></td>
+                        <td>@t.DriverName <br/><small class="text-muted"><code>@t.LicensePlate</code></small></td>
+                        <td>@(string.IsNullOrEmpty(t.Route) ? "—" : t.Route)</td>
+                        <td><span class="badge bg-secondary">@t.Passengers pax</span></td>
+                        <td>@t.DepartureFormatted <small class="text-muted">(#@t.TimeAgo())</small></td>
+                        <td>@t.MarshalName</td>
+                        <td>
+                            <div class="d-flex gap-2">
+                                <form method="post" action="/Trips/Arrive" class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="tripId" value="@t.Id" />
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="fa fa-flag-checkered me-1"></i>Arrived
+                                    </button>
+                                </form>
+                                <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        onclick="openTripDetails('@t.TripRef','@Html.Raw(t.DriverName)','@Html.Raw(t.Route)','@t.Passengers','@t.DepartureFormatted','@t.MarshalName','@Html.Raw(t.TaxiRank)')">
+                                    <i class="fa fa-info-circle"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@* Completed trips today *@
+@if (Model.CompletedTrips.Any())
+{
+    <div class="booking-card" style="margin-top:20px;">
+        <div class="table-header">
+            <h4>✅ Completed Trips Today</h4>
+            <span class="badge bg-success">@Model.CompletedTrips.Count completed</span>
+        </div>
+        <table class="table align-middle">
+            <thead>
+                <tr><th>Trip Ref</th><th>Driver</th><th>Route</th><th>Passengers</th><th>Departed</th><th>Arrived</th><th></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model.CompletedTrips)
+                {
+                    <tr>
+                        <td><strong>@t.TripRef</strong></td>
+                        <td>@t.DriverName</td>
+                        <td>@t.Route</td>
+                        <td>@t.Passengers pax</td>
+                        <td>@t.DepartureFormatted</td>
+                        <td>@t.ArrivalFormatted</td>
+                        <td>
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                    onclick="openTripDetails('@t.TripRef','@Html.Raw(t.DriverName)','@Html.Raw(t.Route)','@t.Passengers','@t.DepartureFormatted','@t.MarshalName','@Html.Raw(t.TaxiRank)')">
+                                <i class="fa fa-info-circle me-1"></i>View
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@* ── Depart Taxi Modal ── *@
+<div class="modal fade" id="departModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">🚌 Depart Taxi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="/Trips/Depart">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="DriverId"     id="departDriverId" />
+                <input type="hidden" name="DriverName"   id="departDriverName" />
+                <input type="hidden" name="LicensePlate" id="departPlate" />
+                <div class="modal-body">
+                    <div class="p-3 rounded mb-3" style="background:#f8f9fa;">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted small">Driver</span>
+                            <strong id="departNameDisplay">—</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted small">License Plate</span>
+                            <code id="departPlateDisplay">—</code>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Route <span class="text-danger">*</span></label>
+                        <input type="text" name="Route" id="departRoute" class="form-control"
+                               placeholder="e.g. Boulders → Tembisa" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Taxi Rank <span class="text-danger">*</span></label>
+                        <input type="text" name="TaxiRank" id="departRank" class="form-control"
+                               placeholder="e.g. Boulders" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Number of Passengers</label>
+                        <input type="number" name="Passengers" class="form-control"
+                               value="15" min="1" max="30" required />
+                        <small class="text-muted">Full taxi capacity (usually 15)</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-truck-fast me-1"></i>Confirm Departure
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* ── Trip Details Modal ── *@
+<div class="modal fade" id="tripDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">📋 Trip Information</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-borderless">
+                    <tr><td class="text-muted">Trip Ref</td><td><strong id="td-ref"></strong></td></tr>
+                    <tr><td class="text-muted">Driver</td><td id="td-driver"></td></tr>
+                    <tr><td class="text-muted">Taxi Rank</td><td id="td-rank"></td></tr>
+                    <tr><td class="text-muted">Destination</td><td id="td-route"></td></tr>
+                    <tr><td class="text-muted">Passengers</td><td id="td-pax"></td></tr>
+                    <tr><td class="text-muted">Departure</td><td id="td-dep"></td></tr>
+                    <tr><td class="text-muted">Marshal</td><td id="td-marshal"></td></tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openDepartModal(driverId, name, plate, route, rank) {
+            document.getElementById("departDriverId").value    = driverId;
+            document.getElementById("departDriverName").value  = name;
+            document.getElementById("departPlate").value       = plate;
+            document.getElementById("departNameDisplay").textContent = name || "—";
+            document.getElementById("departPlateDisplay").textContent = plate || "—";
+            document.getElementById("departRoute").value = route || "";
+            document.getElementById("departRank").value  = rank  || "";
+            new bootstrap.Modal(document.getElementById("departModal")).show();
+        }
+
+        function openTripDetails(ref, driver, route, pax, dep, marshal, rank) {
+            document.getElementById("td-ref").textContent     = ref    || "—";
+            document.getElementById("td-driver").textContent  = driver || "—";
+            document.getElementById("td-rank").textContent    = rank   || "—";
+            document.getElementById("td-route").textContent   = route  || "—";
+            document.getElementById("td-pax").textContent     = pax + " passengers";
+            document.getElementById("td-dep").textContent     = dep    || "—";
+            document.getElementById("td-marshal").textContent = marshal || "—";
+            new bootstrap.Modal(document.getElementById("tripDetailsModal")).show();
+        }
+
+        // Auto-refresh every 30s
+        setTimeout(() => location.reload(), 30000);
+    </script>
+}

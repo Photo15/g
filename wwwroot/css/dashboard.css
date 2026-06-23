@@ -377,3 +377,18 @@ body {
 .activity-card small {
     color: #777;
 }
+
+/* Driver avatar */
+.driver-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #07142d;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    flex-shrink: 0;
+}

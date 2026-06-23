@@ -125,5 +125,5 @@
 /Users/macbookpro/TaxiConnectSA/bin/Debug/net10.0/firebase-key.json
 /Users/macbookpro/TaxiConnectSA/obj/Debug/net10.0/compressed/nwfn5sgkc6-{0}-sixr31kl8j-sixr31kl8j.gz
 /Users/macbookpro/TaxiConnectSA/bin/Debug/net10.0/Data/users.json
-/Users/macbookpro/TaxiConnectSA/obj/Debug/net10.0/compressed/jm2v9j5iop-{0}-yepqd4t8he-yepqd4t8he.gz
 /Users/macbookpro/TaxiConnectSA/obj/Debug/net10.0/TaxiConnectSA.sourcelink.json
+/Users/macbookpro/TaxiConnectSA/obj/Debug/net10.0/compressed/jm2v9j5iop-{0}-jyplvy1pa3-jyplvy1pa3.gz

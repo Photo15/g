@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using TaxiConnectSA.Models;
 using TaxiConnectSA.Services;
 
@@ -11,8 +12,20 @@ namespace TaxiConnectSA.Controllers
     public class HomeController : Controller
     {
         private readonly FirebaseService _fb;
+        private readonly IConfiguration _config;
 
-        public HomeController(FirebaseService fb) => _fb = fb;
+        public HomeController(FirebaseService fb, IConfiguration config)
+        {
+            _fb = fb;
+            _config = config;
+        }
+
+        public override void OnActionExecuting(ActionExecutingContext context)
+        {
+            // Expose Firebase Web API key to every view via ViewBag
+            ViewBag.FirebaseWebApiKey = _config["Firebase:WebApiKey"] ?? "";
+            base.OnActionExecuting(context);
+        }
 
         // ── Dashboard ─────────────────────────────────────────────────────
 
@@ -142,8 +155,135 @@ namespace TaxiConnectSA.Controllers
         [Route("Drivers/Index")]
         public async Task<IActionResult> Drivers()
         {
-            ViewBag.FirebaseError = _fb.ErrorMessage;
+            ViewBag.FirebaseError   = _fb.ErrorMessage;
+            ViewBag.WaitingBookings = (await _fb.GetBookingsAsync())
+                .Where(b => b.Status == "WAITING")
+                .ToList();
             return View(await _fb.GetDriversAsync());
+        }
+
+        [HttpPost]
+        [Route("Drivers/SetStatus")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetDriverStatus(string driverId, string newStatus)
+        {
+            if (!string.IsNullOrWhiteSpace(driverId) && _fb.IsEnabled && _fb.Firestore != null)
+            {
+                await _fb.Firestore.Collection("drivers").Document(driverId)
+                    .UpdateAsync(new Dictionary<string, object> { ["status"] = newStatus });
+                TempData["Success"] = $"Driver status updated to {newStatus}.";
+            }
+            return RedirectToAction("Drivers");
+        }
+
+        [HttpPost]
+        [Route("Drivers/Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteDriver(string driverId)
+        {
+            if (!string.IsNullOrWhiteSpace(driverId) && _fb.IsEnabled && _fb.Firestore != null)
+            {
+                await _fb.Firestore.Collection("drivers").Document(driverId).DeleteAsync();
+                TempData["Success"] = "Driver removed.";
+            }
+            return RedirectToAction("Drivers");
+        }
+
+        [HttpPost]
+        [Route("Drivers/Save")]
+        [Route("Home/Drivers/Save")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveDriver(string driverId, string status)
+        {
+            if (string.IsNullOrWhiteSpace(driverId))
+            {
+                TempData["Error"] = "Driver ID missing.";
+                return RedirectToAction("Drivers");
+            }
+            if (!_fb.IsEnabled || _fb.Firestore == null)
+            {
+                TempData["Error"] = "Firebase is not configured.";
+                return RedirectToAction("Drivers");
+            }
+            var newStatus = (status ?? "AVAILABLE").ToUpperInvariant();
+            await _fb.Firestore.Collection("drivers").Document(driverId)
+                .UpdateAsync(new Dictionary<string, object> { ["status"] = newStatus });
+            TempData["Success"] = $"Driver status updated to {newStatus}.";
+            return RedirectToAction("Drivers");
+        }
+
+        // ── Rank Performance (Trips) ──────────────────────────────────────
+
+        [Route("Home/Rank")]
+        [Route("Rank")]
+        [Route("RankOverview")]
+        [Route("Home/RankOverview")]
+        public async Task<IActionResult> RankOverview()
+        {
+            var drivers = await _fb.GetDriversAsync();
+            var trips   = await _fb.GetTripsAsync(1);
+
+            var vm = new RankViewModel
+            {
+                AvailableDrivers  = drivers.Where(d => d.IsAvailable).ToList(),
+                LoadingDrivers    = drivers.Where(d => d.IsLoading).ToList(),
+                DepartedDrivers   = drivers.Where(d => d.IsDeparted).ToList(),
+                ActiveTrips       = trips.Where(t => t.Status == "DEPARTED").ToList(),
+                CompletedTrips    = trips.Where(t => t.Status == "ARRIVED").ToList(),
+                TotalPassengersToday = trips.Where(t => t.Status == "ARRIVED"
+                    && t.DepartureTime.Date == DateTime.UtcNow.Date).Sum(t => t.Passengers),
+                FirebaseError     = _fb.ErrorMessage
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [Route("Trips/Depart")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DepartTaxi(DepartTaxiViewModel model)
+        {
+            if (!_fb.IsEnabled)
+            {
+                TempData["Error"] = "Firebase is not configured.";
+                return RedirectToAction("RankOverview");
+            }
+            try
+            {
+                // Set marshal name from logged-in user
+                model.MarshalName = User.Identity?.Name ?? "Marshal";
+                await _fb.DepartTaxiAsync(model);
+                TempData["Success"] = $"🚌 {model.DriverName} departed — {model.Passengers} passengers · {model.Route}";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+            return RedirectToAction("RankOverview");
+        }
+
+        [HttpPost]
+        [Route("Trips/Arrive")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkArrived(string tripId)
+        {
+            await _fb.MarkTripArrivedAsync(tripId);
+            TempData["Success"] = "Trip marked as arrived. Driver is now available.";
+            return RedirectToAction("RankOverview");
+        }
+
+        [HttpPost]
+        [Route("Drivers/SetLoading")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SetLoading(string driverId)
+        {
+            if (!string.IsNullOrWhiteSpace(driverId) && _fb.IsEnabled && _fb.Firestore != null)
+            {
+                await _fb.Firestore.Collection("drivers").Document(driverId)
+                    .UpdateAsync(new Dictionary<string, object> { ["status"] = "LOADING" });
+                TempData["Success"] = "Driver set to Loading — passengers boarding.";
+            }
+            return RedirectToAction("RankOverview");
         }
 
         // ── Other pages ───────────────────────────────────────────────────

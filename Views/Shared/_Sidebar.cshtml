@@ -31,8 +31,12 @@
             </a>
         </li>
 
-        <li class="@(currentAction == "Complaints" ? "active" : null)">
-            <a asp-controller="Home" asp-action="Complaints">
+        <li class="@(currentAction == "RankOverview" ? "active" : null)">
+            <a asp-controller="Home" asp-action="RankOverview">
+                <i class="fa fa-map me-1"></i>
+                Rank Overview
+            </a>
+        </li>
                 <i class="fa fa-circle-exclamation"></i>
                 Complaints
             </a>
